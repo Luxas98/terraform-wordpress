@@ -1,6 +1,6 @@
 resource "google_container_cluster" "primary" {
   provider = "google-beta"
-  name     = "lukas-playground"
+  name     = "wordpress"
   location = "${var.region}-${var.zone}"
   project = "${var.project_id}"
 

@@ -4,7 +4,7 @@ resource "kubernetes_service" "wordpress" {
     labels = {
       app = "wordpress"
     }
-
+    namespace = kubernetes_namespace.wordpress.metadata[0].name
     name = "wordpress"
   }
 

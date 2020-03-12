@@ -2,6 +2,7 @@ resource "kubernetes_deployment" "wordpress" {
   provider = "kubernetes.wordpress"
   metadata {
     name = "wordpress"
+    namespace = kubernetes_namespace.wordpress.metadata[0].name
   }
   spec {
     selector {

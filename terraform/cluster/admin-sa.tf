@@ -4,10 +4,12 @@ provider "kubernetes" {
 }
 
 resource "kubernetes_service_account" "cluster-admin" {
+  provider = "kubernetes"
   metadata {
     name = "cluster-admin"
     namespace = "kube-system"
   }
+  depends_on = [google_container_cluster.primary]
 }
 
 data "kubernetes_secret" "cluster-admin-token" {
@@ -36,4 +38,6 @@ resource "kubernetes_cluster_role_binding" "cluster-admin-binding" {
     name      = "${kubernetes_service_account.cluster-admin.metadata.0.name}"
     namespace = "kube-system"
   }
+
+  depends_on = [kubernetes_service_account.cluster-admin]
 }

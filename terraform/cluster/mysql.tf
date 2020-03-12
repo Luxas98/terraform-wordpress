@@ -11,7 +11,8 @@ resource "random_id" "db_name_suffix" {
 }
 
 resource "google_sql_database_instance" "wordpress" {
-  name             = "wordpress-instance-${random_id.db_name_suffix.hex}"
+  provider = "google-beta"
+  name             = "wordpress-instance-1-${random_id.db_name_suffix.hex}"
   database_version = "MYSQL_5_6"
   project = "${var.project_id}"
   # First-generation instance regions are not the conventional

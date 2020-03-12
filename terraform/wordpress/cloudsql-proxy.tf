@@ -2,6 +2,7 @@ resource "kubernetes_secret" "cloudsql-db-credentials" {
   provider = "kubernetes.wordpress"
   metadata {
     name = "cloudsql-db-credentials"
+    namespace = kubernetes_namespace.wordpress.metadata[0].name
   }
 
   data = {
@@ -14,6 +15,7 @@ resource "kubernetes_secret" "cloudsql-instance-credentials" {
   provider = "kubernetes.wordpress"
   metadata {
     name = "cloudsql-instance-credentials"
+    namespace = kubernetes_namespace.wordpress.metadata[0].name
   }
 
   data = {
