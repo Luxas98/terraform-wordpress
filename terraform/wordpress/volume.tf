@@ -13,5 +13,3 @@ resource "kubernetes_persistent_volume_claim" "wordpress-volumeclaim" {
     }
   }
 }
-
-
