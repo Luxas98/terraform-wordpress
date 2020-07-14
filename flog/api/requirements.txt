@@ -1,2 +1,17 @@
+bs4
+celery
 flask
+flask_admin
+flask_session
+flask_login
+flask_security
+flask_alembic
+flask_sqlalchemy
+flask_restful
+flask_marshmallow
+email_validator
+marshmallow-sqlalchemy
+sqlalchemy
 python-dotenv
+pytz
+marshmallow
