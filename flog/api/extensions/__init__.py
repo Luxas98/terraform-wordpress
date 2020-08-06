@@ -1,12 +1,16 @@
 from flask_alembic import Alembic
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
-# from flask_wtf import CSRFProtect
+from flask_wtf import CSRFProtect
+from flask_script import Manager
+from flask_migrate import Migrate, MigrateCommand
 from sqlalchemy import MetaData
 
 
 session = Session()
-# csrf = CSRFProtect()
+csrf = CSRFProtect()
+
+
 
 # configure SQLAlchemy
 db = SQLAlchemy(metadata=MetaData(naming_convention={
@@ -16,4 +20,5 @@ db = SQLAlchemy(metadata=MetaData(naming_convention={
     'fk': 'fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s',
     'pk': 'pk_%(table_name)s',
 }))
-alembic = Alembic()
+
+migrate = Migrate(db=db)

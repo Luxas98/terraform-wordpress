@@ -1,4 +1,5 @@
 bs4
+bcrypt
 celery
 flask
 flask_admin
@@ -10,8 +11,11 @@ flask_sqlalchemy
 flask_restful
 flask_marshmallow
 email_validator
+flask-script
+flask-migrate
 marshmallow-sqlalchemy
 sqlalchemy
+psycopg2
 python-dotenv
 pytz
 marshmallow

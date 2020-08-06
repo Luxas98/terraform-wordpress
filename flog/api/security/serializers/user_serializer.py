@@ -1,6 +1,6 @@
 import re
 
-from api.api import ModelSerializer, fields, validates, ValidationError
+from api.apibase import ModelSerializer, fields, validates, ValidationError
 
 from ..models import User
 
@@ -9,11 +9,12 @@ NON_ALPHANUMERIC_RE = re.compile(r'[^\w]')
 
 class UserSerializer(ModelSerializer):
     email = fields.Email(required=True)
-    roles = fields.Nested('RoleSerializer', only='name', many=True)
+    roles = fields.Nested('RoleSerializer', many=True)
 
     class Meta:
         model = User
-        exclude = ('confirmed_at', 'created_at', 'updated_at', 'user_roles')
+        # exclude = ('confirmed_at', 'updated_at', 'user_roles')
+        exclude = ()
         dump_only = ('active', 'roles')
         load_only = ('password',)
 

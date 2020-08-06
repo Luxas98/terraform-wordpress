@@ -1,7 +1,7 @@
 from flask_sqlalchemy.model import camel_to_snake_case
 from marshmallow.exceptions import ValidationError
 
-from api.extensions.marshmallow import ma
+from ..extensions.marshmallow import ma
 
 from .constants import READ_ONLY_FIELDS
 from .utils import to_camel_case

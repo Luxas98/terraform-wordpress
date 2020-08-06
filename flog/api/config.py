@@ -14,18 +14,23 @@ STATIC_FOLDER = os.environ.get(
 )
 STATIC_URL_PATH = '/static'  # serve asset files in static/ at /static/
 
-API_BUNDLES = os.environ.get('ENDPOINTS', 'whatsapp').split(',')
+API_BUNDLES = os.environ.get('ENDPOINTS', 'admin,test').split(',')
 
 if not API_BUNDLES:
     log.error(
         "Please specify which API bundle to use, available api: ['api'], "
-        "eg. API_BUNDLES=file,image,prediction "
     )
 
 
 
 # list of bundle modules to register with the app, in dot notation
-BUNDLES = [f'api.{bundle}' for bundle in API_BUNDLES]
+# BUNDLES = [f'api.{bundle}' for bundle in API_BUNDLES]
+
+BUNDLES = [
+    'api.admin',
+    'api.security',
+    'api.test'
+]
 
 # ordered list of extensions to register before the bundles
 # syntax is import.name.in.dot.module.notation:extension_instance_name
@@ -33,11 +38,10 @@ EXTENSIONS = [
     'api.extensions:session',               # should be first
     'api.extensions:csrf',                  # should be second
     'api.extensions:db',
-    'api.extensions:alembic',               # must come after db
+    'api.extensions:migrate',               # must come after db
     'api.extensions.celery:celery',
     'api.extensions.mail:mail',
     'api.extensions.marshmallow:ma',        # must come after db
-
     'api.extensions.security:security',
 ]
 
@@ -71,7 +75,9 @@ class BaseConfig(object):
     ##########################################################################
     # db                                                                  #
     ##########################################################################
-    SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/test.db'
+    # SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/test.db'
+    SQLALCHEMY_DATABASE_URI = 'postgresql://postgres:example@localhost/flog_api'
+    SECURITY_PASSWORD_SALT = 'supersecret'
 
     ##########################################################################
     # security                                                               #

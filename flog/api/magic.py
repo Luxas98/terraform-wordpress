@@ -1,7 +1,11 @@
 import click
 import flask
 import inspect
+
+from .extensions.marshmallow import ma
+from flask_sqlalchemy import Model
 from importlib import import_module
+
 from api.utils import title_case
 
 
@@ -38,18 +42,15 @@ def get_extensions(import_names):
         if module_name not in extension_modules:
             module = import_module(module_name)
             extension_modules[module_name] = dict(
-                inspect.getmembers(module, is_extension)
-            )
+                inspect.getmembers(module, is_extension))
 
         extension_module = extension_modules[module_name]
         if extension_name in extension_module:
             yield extension_name, extension_module[extension_name]
         else:
             from warnings import warn
-            warn(
-                f'Could not find the {extension_name} extension in the '
-                f'{module_name} module (did you forget to instantiate it?)'
-            )
+            warn(f'Could not find the {extension_name} extension in the '
+                 f'{module_name} module (did you forget to instantiate it?)')
 
 
 def is_blueprint(obj):
@@ -73,7 +74,7 @@ def get_commands():
     from api import commands
     existing_group_commands = {}
     for name, group in inspect.getmembers(commands, is_click_group):
-        # existing_group_commands.update(group.commands)
+        existing_group_commands.update(group.commands)
         if name not in commands.EXISTING_EXTENSION_GROUPS:
             yield (name, group)
 
@@ -81,6 +82,25 @@ def get_commands():
         return is_click_command(obj) and name not in existing_group_commands
 
     yield from get_members(commands, _is_click_command)
+
+
+def is_model_admin(name, obj):
+    from api.admin import ModelAdmin
+    _is_model_admin = inspect.isclass(obj) and issubclass(obj, ModelAdmin)
+    base_classes = ('ModelAdmin',)
+    return _is_model_admin and name not in base_classes
+
+
+def is_model(name, obj):
+    is_model_class = inspect.isclass(obj) and issubclass(obj, Model)
+    base_classes = ('Model',)
+    return is_model_class and name not in base_classes
+
+
+def is_serializer(name, obj):
+    is_model_schema = inspect.isclass(obj) and issubclass(obj, ma.SQLAlchemySchema)
+    base_classes = ('ModelSerializer', 'ModelSchema', 'SQLAlchemySchema')
+    return is_model_schema and name not in base_classes
 
 
 sentinel = object()
@@ -100,7 +120,7 @@ class Bundle(object):
     Simple bundle example::
 
         $ tree
-        backend/
+        api/
         └── simple/
             ├── __init__.py
             ├── admins.py
@@ -112,7 +132,7 @@ class Bundle(object):
     Big bundle example::
 
         $ tree
-        backend/
+        api/
         └── big/
             ├── __init__.py
             ├── admins
@@ -144,18 +164,18 @@ class Bundle(object):
                 ├── one_resource.py
                 └── two_resource.py
 
-    In both cases, :file:`backend/<bundle_folder_name>/__init__.py` is the same::
+    In both cases, :file:`api/<bundle_folder_name>/__init__.py` is the same::
 
-        $ cat backend/<bundle_folder_name>/__init__.py
-        from backend.magic import Bundle
+        $ cat api/<bundle_folder_name>/__init__.py
+        from api.magic import Bundle
 
         bundle = Bundle(__name__)
 
-    Finally, the bundle modules must be registered in :file:`backend/config.py`::
+    Finally, the bundle modules must be registered in :file:`api/config.py`::
 
         BUNDLES = [
-            'backend.simple',
-            'backend.big',
+            'api.simple',
+            'api.big',
         ]
 
     :param str module_name: Top-level module name of the bundle (dot notation)
@@ -180,19 +200,17 @@ class Bundle(object):
     _views_module_name = 'views'
     _blueprint_names = sentinel
 
-    def __init__(
-        self,
-        module_name,
-        admin_category_name=None,
-        admin_icon_class=None,
-        admins_module_name=sentinel,
-        commands_module_name=sentinel,
-        command_group_names=sentinel,
-        models_module_name=sentinel,
-        serializers_module_name=sentinel,
-        views_module_name=sentinel,
-        blueprint_names=sentinel,
-    ):
+    def __init__(self, module_name,
+                 admin_category_name=None,
+                 admin_icon_class=None,
+                 admins_module_name=sentinel,
+                 commands_module_name=sentinel,
+                 command_group_names=sentinel,
+                 models_module_name=sentinel,
+                 serializers_module_name=sentinel,
+                 views_module_name=sentinel,
+                 blueprint_names=sentinel,
+                 ):
         self.module_name = module_name
 
         self._admin_category_name = admin_category_name
@@ -200,31 +218,21 @@ class Bundle(object):
         self.admin_icon_class = admin_icon_class
 
         if admins_module_name != sentinel:
-            self._admins_module_name = self._normalize_module_name(
-                admins_module_name
-            )
+            self._admins_module_name = self._normalize_module_name(admins_module_name)
 
         if commands_module_name != sentinel:
-            self._commands_module_name = self._normalize_module_name(
-                commands_module_name
-            )
+            self._commands_module_name = self._normalize_module_name(commands_module_name)
 
         self._command_group_names = command_group_names
 
         if models_module_name != sentinel:
-            self._models_module_name = self._normalize_module_name(
-                models_module_name
-            )
+            self._models_module_name = self._normalize_module_name(models_module_name)
 
         if serializers_module_name != sentinel:
-            self._serializers_module_name = self._normalize_module_name(
-                serializers_module_name
-            )
+            self._serializers_module_name = self._normalize_module_name(serializers_module_name)
 
         if views_module_name != sentinel:
-            self._views_module_name = self._normalize_module_name(
-                views_module_name
-            )
+            self._views_module_name = self._normalize_module_name(views_module_name)
 
         self._blueprint_names = blueprint_names
 
@@ -247,6 +255,15 @@ class Bundle(object):
         return bool(safe_import_module(self.admins_module_name))
 
     @property
+    def model_admins(self):
+        if not self.has_admins:
+            return ()
+
+        admins_module = safe_import_module(self.admins_module_name)
+        for name, obj in get_members(admins_module, is_model_admin):
+            yield obj
+
+    @property
     def views_module_name(self):
         return self._get_full_module_name(self._views_module_name)
 
@@ -265,7 +282,7 @@ class Bundle(object):
     @property
     def blueprints(self):
         if not self.has_blueprints:
-            raise StopIteration
+            return ()
 
         module = safe_import_module(self.views_module_name)
         blueprints = dict(inspect.getmembers(module, is_blueprint))
@@ -291,7 +308,7 @@ class Bundle(object):
     @property
     def command_groups(self):
         if not self.has_command_groups:
-            raise StopIteration
+            return ()
 
         module = safe_import_module(self.commands_module_name)
         command_groups = dict(inspect.getmembers(module, is_click_group))
@@ -309,6 +326,14 @@ class Bundle(object):
         return bool(safe_import_module(self.models_module_name))
 
     @property
+    def models(self):
+        if not self.has_models:
+            return ()
+
+        module = safe_import_module(self.models_module_name)
+        yield from get_members(module, is_model)
+
+    @property
     def serializers_module_name(self):
         return self._get_full_module_name(self._serializers_module_name)
 
@@ -321,7 +346,7 @@ class Bundle(object):
     @property
     def serializers(self):
         if not self.has_serializers:
-            raise StopIteration
+            return ()
 
         module = safe_import_module(self.serializers_module_name)
         yield from get_members(module, is_serializer)
@@ -355,8 +380,6 @@ def get_bundles():
                 yield bundle
             if not bundle_found:
                 from warnings import warn
-                warn(
-                    'Unable to find a Bundle instance for the '
-                    f'{bundle_or_module_name} module! '
-                    'Please create one in its __init__.py file.'
-                )
+                warn('Unable to find a Bundle instance for the '
+                     f'{bundle_or_module_name} module! '
+                     'Please create one in its __init__.py file.')

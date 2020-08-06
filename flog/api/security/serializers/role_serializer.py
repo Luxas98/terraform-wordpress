@@ -1,4 +1,4 @@
-from api.api import ModelSerializer
+from api.apibase import ModelSerializer
 
 from ..models import Role
 

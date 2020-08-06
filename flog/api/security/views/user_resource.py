@@ -4,7 +4,7 @@ from flask_security.signals import user_registered
 from flask_security.utils import config_value, login_user, send_mail
 from flask_security.views import _commit, _security
 
-from api.api import ModelResource, CREATE, GET, PATCH
+from api.apibase import ModelResource, CREATE, GET, PATCH
 from api.extensions.api import api
 
 from .blueprint import security

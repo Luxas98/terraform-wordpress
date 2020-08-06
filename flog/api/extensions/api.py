@@ -1,5 +1,5 @@
 import os
-from api.api import Api
+from api.apibase import Api
 # Flask-Restful must be initialized _AFTER_ the SQLAlchemy extension has
 # been initialized, AND after all views, models, and serializers have
 # been imported. This is because the @api decorators create deferred
